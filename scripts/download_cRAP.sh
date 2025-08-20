@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# actually, i just pulled the annotated version from the dia-nn installation folder packaged into the windows .msi
 # Directory to download to
 DOWNLOAD_DIR="/Users/jbard/Library/CloudStorage/SynologyDrive-home/repos/bardlab_diann/libraries/cRAP"
 

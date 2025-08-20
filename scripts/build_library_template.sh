@@ -5,7 +5,7 @@ library_dir="/scratch/group/jbardlab/mass_spec/"
 /diann-2.2.0/diann-linux \
     --fasta "${fasta_dir}/human/UP000005640_9606.fasta" \
     --fasta "${fasta_dir}/CHIKV_AF15561/CHIKV_AF15561.fasta" \
-    --fasta "${fasta_dir}/cRAP/cRAP_20190401.fasta" --cont-quant-exclude cRAP \
+    --fasta "${fasta_dir}/cRAP/camprotR_240512_cRAP_20190401_full_tags.fasta" --cont-quant-exclude cRAP- \
     --gen-spec-lib --predictor --fasta-search \
     --threads 24 \
     --out "${library_dir}/human_CHIKV/human_CHIKV_library" \
