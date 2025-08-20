@@ -1,31 +1,26 @@
-# from https://github.com/vdemichev/DiaNN/issues/1202#issuecomment-2417108281
-FROM --platform=linux/amd64 ubuntu
+FROM debian:12
 USER root
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update package lists and ensure package versions are up to date
-RUN apt-get update && apt-get upgrade -y
+RUN apt-get update -y
+RUN apt-get install -y \
+        locales && \
+    rm -r /var/lib/apt/lists/*
 
-# Install necessary packages including locales
-RUN apt-get install wget unzip libgomp1 locales -y
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    sed -i -e 's/# de_DE.UTF-8 UTF-8/de_DE.UTF-8 UTF-8/' /etc/locale.gen && \
+    dpkg-reconfigure --frontend=noninteractive locales
 
-# Configure locale to avoid runtime errors
-RUN locale-gen en_US.UTF-8 && \
-    update-locale LANG=en_US.UTF-8
+RUN apt update && apt install -y libgomp1 build-essential wget
 
-# Set environment variables for locale
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US:en
-ENV LC_ALL=en_US.UTF-8
+RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
+    dpkg -i packages-microsoft-prod.deb && \
+    rm packages-microsoft-prod.deb
 
-# Download DIA-NN version <version>
-RUN wget https://github.com/vdemichev/DiaNN/releases/download/2.0/DIA-NN-2.2.0-Academia-Linux.zip -O diann-2.2.0.Linux.zip
+RUN apt-get update && apt-get install -y dotnet-sdk-8.0 && rm -r /var/lib/apt/lists/*
 
-# Unzip the DIA-NN package
-RUN unzip diann-2.2.0.Linux.zip
+ARG DIANNV=2.2.0
+COPY diann-$DIANNV /diann-$DIANNV
 
-# Set appropriate permissions for the DIA-NN folder
-RUN chmod -R 775 /diann-2.2.0
-
-# NOTE: It is entirely the user's responsibility to ensure compliance with DIA-NN license terms.
-# Please review the licensing terms for DIA-NN before using or distributing this Docker image.
+RUN echo ls
+RUN chmod -R 775 /diann-$DIANNV
