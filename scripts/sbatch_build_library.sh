@@ -9,7 +9,7 @@
 #SBATCH --error=/scratch/user/jbard/sbatch/logs/diann/%x.%j.stderr
 
 image_path="/scratch/group/jbardlab/containers/diann_docker:v0.1.sif"
-build_script="/Users/jbard/Library/CloudStorage/SynologyDrive-home/repos/bardlab_diann/scripts/build_library.sh"
+build_script="/scratch/user/jbard/repos/bardlab_diann/scripts/build_library.sh"
 
 singularity exec \
     "${image_path}"  \
