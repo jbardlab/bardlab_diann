@@ -1,0 +1,39 @@
+---
+title: "Analyze Polysome"
+author: "Jared Bard"
+date: "2025-05-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("cowplot")) install.packages("cowplot")
+if (!require("ggokabeito")) install.packages("ggokabeito")
+if (!require("flextable")) install.packages("flextable")
+if (!require("readxl")) install.packages("readxl")
+if (!require("devtools")) install.packages("devtools")
+if (!require("cat.extras")) devtools::install_github("jabard89/cat.extras") #convenient utility functions like prettier log scales
+
+`%!in%` = Negate(`%in%`)
+library(tidyverse)
+library(cowplot)
+library(conflicted)
+conflicts_prefer(dplyr::filter)
+theme_set(theme_minimal_grid(font_size = 12))
+okabe_ito_colors <- palette.colors(n = NULL, palette = "Okabe-Ito", recycle = FALSE)
+```
+
+```{r}
+df_stress <- read_excel("41589_2024_1721_MOESM3_ESM.xlsx", sheet = "AS_vol",
+                        col_names = c("Gene","Uniprot_group","minuslog_Pvalue","log2FC","Sig","Known_SG","Known_NES"), skip = 1) %>%
+  mutate(Treatment = "NaAsO2_500uM_30min")
+df_unstress <- read_excel("41589_2024_1721_MOESM3_ESM.xlsx", sheet = "NT_vol",
+                        col_names = c("Gene","Uniprot_group","minuslog_Pvalue","log2FC","Sig","Known_PreStress","Known_SG","Known_NES"), skip = 1) %>%
+  mutate(Treatment = "unstressed")
+df_Pan <- df_stress %>% filter(minuslog_Pvalue>=1) %>% select(Gene,Uniprot_group,log2FC,Treatment) %>%
+  bind_rows(df_unstress %>% filter(minuslog_Pvalue>=1) %>%  select(Gene,Uniprot_group,log2FC,Treatment)) %>%
+  pivot_wider(names_from = Treatment, values_from =log2FC, names_prefix = "log2FC_") %>%
+  mutate(FC_stress = log2FC_NaAsO2_500uM_30min - log2FC_unstressed)
+```
+

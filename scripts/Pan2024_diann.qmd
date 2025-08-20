@@ -1,0 +1,223 @@
+---
+title: "250812 Pan2024"
+author: "Jared Bard"
+date: "08/12/2025"
+format: 
+  html:
+    code-fold: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+# install required packages
+if (!requireNamespace("BiocManager")) install.packages("BiocManager")
+if (!requireNamespace("tidyverse")) install.packages("tidyverse")
+if (!requireNamespace("flowCore")) BiocManager::install("flowCore")
+if (!requireNamespace("cowplot")) install.packages("cowplot")
+if (!requireNamespace("sf")) install.packages("sf")
+if (!requireNamespace("scales")) install.packages("scales")
+if (!requireNamespace("ggokabeito")) install.packages("ggokabeito")
+if (!requireNamespace("ggpattern")) install.packages("ggpattern")
+if (!requireNamespace("ggsignif")) install.packages("ggsignif")
+if (!requireNamespace("flextable")) install.packages("flextable")
+if (!requireNamespace("readxl")) install.packages("readxl")
+if (!requireNamespace("egg")) install.packages("egg")
+if (!requireNamespace("devtools")) install.packages("devtools")
+if (!requireNamespace("arrow")) install.packages("arrow")
+if (!requireNamespace("org.Hs.eg.db")) BiocManager::install("org.Hs.eg.db")
+if (!requireNamespace("cat.extras")) devtools::install_github("jabard89/cat.extras") #convenient utility functions like prettier log scales
+
+library(tidyverse)
+library(flowCore)
+library(cowplot)
+library(conflicted)
+library(cat.extras)
+library(readxl)
+conflicts_prefer(dplyr::filter)
+
+theme_set(theme_minimal_grid(font_size = 8))
+okabe_ito_colors <- palette.colors(n = NULL, palette = "Okabe-Ito", recycle = FALSE)
+```
+
+# make annotation table
+```{r}
+# Create UniProt.ws object
+human_annotations <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
+                           keys = AnnotationDbi::keys(org.Hs.eg.db::org.Hs.eg.db, keytype = "UNIPROT"),
+                           columns = c("UNIPROT", "GENENAME", "SYMBOL", "ALIAS"),
+                           keytype = "UNIPROT") %>%
+  as_tibble() %>%
+  rename(
+    uniprot_id = UNIPROT,
+    protein_name = GENENAME,
+    gene_symbol = SYMBOL,
+    gene_alias = ALIAS
+  )
+
+# Remove duplicates if needed
+human_annotations <- human_annotations %>%
+  distinct(uniprot_id, .keep_all = TRUE)
+```
+
+# make annotation table
+```{r}
+# Create annotation table from sample information
+library(dplyr)
+library(stringr)
+
+# Input data
+sample_data <- data.frame(
+  file_name = c(
+    "RP_1_Nov6_DIA_Slot2-19_1_1371.d", "RP_2_Nov6_DIA_Slot2-20_1_1374.d", 
+    "RP_3_Nov6_DIA_Slot2-21_1_1375.d", "RP_4_Nov6_DIA_Slot2-22_1_1377.d",
+    "RP_5_Nov6_DIA_Slot2-23_1_1378.d", "RP_6_Nov6_DIA_Slot2-24_1_1379.d",
+    "RP_7_Nov6_DIA_Slot2-25_1_1381.d", "RP_8_Nov6_DIA_Slot2-26_1_1382.d",
+    "RP_9_Nov6_DIA_Slot2-27_1_1383.d", "RP_10_Nov6_DIA_Slot2-28_1_1385.d",
+    "RP_11_Nov6_DIA_re_Slot2-29_1_1413.d", "RP_12_Nov6_DIA_Slot2-30_1_1387.d",
+    "RP_13_Nov6_DIA_Slot2-31_1_1389.d", "RP_14_Nov6_DIA_Slot2-32_1_1390.d",
+    "RP_15_Nov6_DIA_Slot2-33_1_1391.d", "RP_16_Nov6_DIA_Slot2-34_1_1393.d",
+    "RP_17_Nov6_DIA_Slot2-35_1_1394.d", "RP_18_Nov6_DIA_re_Slot2-36_1_1414.d",
+    "RP_19_Nov6_DIA_re_Slot2-37_1_1415.d", "RP_20_Nov6_DIA_re_Slot2-38_1_1416.d",
+    "RP_21_Nov6_DIA_Slot2-39_1_1399.d", "RP_22_Nov6_DIA_Slot2-40_1_1401.d",
+    "RP_23_Nov6_DIA_Slot2-41_1_1402.d", "RP_24_Nov6_DIA_Slot2-42_1_1403.d",
+    "RP_25_Nov6_DIA_Slot2-43_1_1405.d", "RP_26_Nov6_DIA_Slot2-44_1_1406.d",
+    "RP_27_Nov6_DIA_Slot2-45_1_1407.d", "RP_28_Nov6_DIA_Slot2-46_1_1409.d",
+    "RP_29_Nov6_DIA_Slot2-47_1_1410.d", "RP_30_Nov6_DIA_Slot2-48_1_1411.d"
+  ),
+  biological_sample = c(
+    "HaloTag-G3BP1 labeling NT-1", "HaloTag-G3BP1 labeling AS-1",
+    "HaloTag-G3BP1 labeling D30-1", "HaloTag-G3BP1 labeling D60-1",
+    "HaloTag-G3BP1 labeling D120-1", "HaloTag-G3BP1 labeling NT-2",
+    "HaloTag-G3BP1 labeling AS-2", "HaloTag-G3BP1 labeling D30-2",
+    "HaloTag-G3BP1 labeling D60-2", "HaloTag-G3BP1 labeling D120-2",
+    "HaloTag-G3BP1 labeling NT-3", "HaloTag-G3BP1 labeling AS-3",
+    "HaloTag-G3BP1 labeling D30-3", "HaloTag-G3BP1 labeling D60-3",
+    "HaloTag-G3BP1 labeling D120-3", "HaloTag-NES labeling NT-1",
+    "HaloTag-NES labeling AS-1", "HaloTag-NES labeling D30-1",
+    "HaloTag-NES labeling D60-1", "HaloTag-NES labeling D120-1",
+    "HaloTag-NES labeling NT-2", "HaloTag-NES labeling AS-2",
+    "HaloTag-NES labeling D30-2", "HaloTag-NES labeling D60-2",
+    "HaloTag-NES labeling D120-2", "HaloTag-NES labeling NT-3",
+    "HaloTag-NES labeling AS-3", "HaloTag-NES labeling D30-3",
+    "HaloTag-NES labeling D60-3", "HaloTag-NES labeling D120-3"
+  )
+)
+
+# Parse the biological sample information
+annotation_table <- sample_data %>%
+  # Extract strain (HaloTag-G3BP1 or HaloTag-NES)
+  mutate(strain = str_extract(biological_sample, "HaloTag-[A-Z0-9]+")) %>%
+  
+  # Extract treatment and biorep together (e.g., "NT-1", "AS-2", "D30-1")
+  mutate(treatment_biorep = str_extract(biological_sample, "(NT|AS|D\\d+)-\\d+")) %>%
+  
+  # Split treatment and biorep
+  mutate(
+    treatment = str_extract(treatment_biorep, "(NT|AS|D\\d+)"),
+    biorep = as.numeric(str_extract(treatment_biorep, "\\d+$"))
+  ) %>%
+  
+  # Clean up and select final columns
+  select(file_name, biological_sample, strain, treatment, biorep) %>%
+  
+  # Add a sample_id for easier reference
+  mutate(sample_id = paste0(strain, "_", treatment, "_", biorep)) %>%
+  mutate(Run = str_replace(file_name, "\\.d$", ""))
+```
+
+# load data
+```{r}
+file1 <- "Pan2024_diann_report.parquet"
+
+report_df_raw <- arrow::read_parquet(file1) |>
+  as_tibble() %>%
+  mutate(uniprot_id = Protein.Group) %>%
+  left_join(human_annotations, by = "uniprot_id") |>
+  left_join(annotation_table, by = "Run")
+
+report_df <- report_df_raw |>
+  select(Run, sample_id, biological_sample, strain, treatment, biorep,
+         uniprot_id, gene_symbol, gene_alias,
+         PG.Q.Value,PG.MaxLFQ) |>
+  unique() |>
+  filter(PG.Q.Value <= 0.01) |>
+  group_by(treatment,strain,uniprot_id) |>
+  filter(length(PG.MaxLFQ) == 3) |>
+  group_by(treatment,uniprot_id) |>
+  mutate(log2.LFQ = log2(PG.MaxLFQ + 1)) |>
+  mutate(log2.FC = log2.LFQ - mean(log2.LFQ[strain == "HaloTag-NES"])) %>%
+  group_by(strain,treatment,uniprot_id) |>
+  mutate(log2.FC.mean = mean(log2.FC)) |>
+  group_by(strain,uniprot_id) |>
+  mutate(log2.FC.treat = log2.FC - mean(log2.FC[treatment == "NT"])) |>
+  group_by(strain,treatment,uniprot_id) |>
+  mutate(log2.FC.treat.mean = mean(log2.FC.treat))
+```
+
+# load just 2
+# load data
+```{r}
+file2 <- "1374_1394_diann_report.parquet"
+
+report_df_raw2 <- arrow::read_parquet(file2) |>
+  as_tibble() %>%
+  mutate(uniprot_id = Protein.Group) %>%
+  left_join(human_annotations, by = "uniprot_id") |>
+  left_join(annotation_table, by = "Run")
+
+report_df2 <- report_df_raw2 |>
+  select(Run, sample_id, biological_sample, strain, treatment, biorep,
+         uniprot_id, gene_symbol, gene_alias,
+         PG.Q.Value,PG.MaxLFQ) |>
+  unique() |>
+  filter(PG.Q.Value <= 0.01) |>
+  group_by(treatment,strain,uniprot_id) |>
+  group_by(treatment,uniprot_id) |>
+  mutate(log2.LFQ = log2(PG.MaxLFQ + 1)) |>
+  mutate(log2.FC = log2.LFQ - mean(log2.LFQ[strain == "HaloTag-NES"])) %>%
+  group_by(strain,treatment,uniprot_id) |>
+  mutate(log2.FC.mean = mean(log2.FC))
+```
+
+```{r}
+df_all <- bind_rows(report_df %>% mutate(Analysis = "all"),
+                report_df2 %>% mutate(Analysis = "select2"))
+df <- df_all |> 
+  filter(strain == "HaloTag-G3BP1") |>
+  select(uniprot_id,gene_symbol,strain,treatment,biorep,log2.FC,log2.FC.mean,Analysis) |>
+  pivot_wider(names_from = Analysis, values_from = c(log2.FC,log2.FC.mean))
+
+ggplot(df,
+       aes(x = log2.FC.mean_all, y = log2.FC.mean_select2)) +
+  geom_point() +
+  facet_grid(. ~ treatment) +
+  coord_cartesian(xlim = c(-3,6), ylim = c(-3,6))
+```
+
+
+# look just at LFQ values
+```{r}
+report_df_LFQ <- report_df_raw |>
+  select(Run, sample_id, biological_sample, strain, treatment, biorep,
+         uniprot_id, gene_symbol, gene_alias,
+         PG.Q.Value,PG.MaxLFQ) |>
+  unique() |>
+  filter(PG.Q.Value <= 0.01) |>
+  group_by(treatment,strain,uniprot_id) |>
+  mutate(log2.LFQ = log2(PG.MaxLFQ + 1)) |>
+  filter(log2.LFQ > 0, sd(log2.LFQ) <= 2) |>
+  filter(length(PG.MaxLFQ) == 3) |>
+  group_by(sample_id) |>
+  mutate(log2.LFQ.min = min(log2.LFQ)) |>
+  group_by(treatment,uniprot_id) |>
+  mutate(log2.FC.NES = log2.LFQ - mean(log2.LFQ[strain == "HaloTag-NES"])) %>%
+  mutate(log2.FC.NES = if_else(is.na(log2.FC.NES), log2.LFQ - log2.LFQ.min, log2.FC.NES)) |>
+  group_by(strain,treatment,uniprot_id) |>
+  mutate(log2.FC.NES.mean = mean(log2.FC.NES)) |>
+  group_by(strain,uniprot_id) |>
+  mutate(log2.FC.treat = log2.FC.NES - mean(log2.FC.NES[treatment == "NT"])) |>
+  group_by(strain,treatment,uniprot_id) |>
+  mutate(log2.FC.treat.mean = mean(log2.FC.treat))
+```
+
