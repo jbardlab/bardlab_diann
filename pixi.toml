@@ -1,0 +1,11 @@
+[workspace]
+authors = ["Jared Bard <jabard89@gmail.com>"]
+channels = ["conda-forge", "bioconda"]
+name = "bardlab_diann"
+platforms = ["osx-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+fragpipe = ">=22.0,<23"
