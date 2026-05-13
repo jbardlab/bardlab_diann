@@ -8,7 +8,7 @@
 #SBATCH --output=/scratch/user/jbard/sbatch/logs/diann/%x.%j.stdout
 #SBATCH --error=/scratch/user/jbard/sbatch/logs/diann/%x.%j.stderr
 
-image_path="/scratch/group/jbardlab/containers/diann_docker:v0.1.sif"
+image_path="/scratch/group/jbardlab/containers/diann_docker:v2.5.1.sif"
 build_script="/scratch/user/jbard/repos/bardlab_diann/scripts/build_library.sh"
 
 singularity exec \

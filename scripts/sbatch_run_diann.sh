@@ -9,7 +9,7 @@
 #SBATCH --output=/scratch/group/jbardlab/jbard/logs/diann/%x.%j.stdout
 #SBATCH --error=/scratch/group/jbardlab/jbard/logs/diann/%x.%j.stderr
 
-image_path="/scratch/group/jbardlab/containers/diann_docker:v0.1.sif"
+image_path="/scratch/group/jbardlab/containers/diann_docker:v2.5.1.sif"
 analysis_dir="/scratch/group/jbardlab/jbard/mass_spec/20251016_tune_phos"
 analyze_script="${analysis_dir}/tune_data.sh"
 data_dir="/scratch/group/jbardlab/jbard/mass_spec/20251016_tune_phos/data"

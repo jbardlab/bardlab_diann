@@ -8,7 +8,7 @@ num_threads=${nthreads:-24}
 var_mod=""
 
 #first setup the library
-/diann-2.2.0/diann-linux \
+/diann-2.5.1/diann-linux \
     --fasta "${fasta_dir}/human/UP000005640_9606.fasta" \
     --fasta "${fasta_dir}/CHIKV_AF15561/CHIKV_AF15561.fasta" \
     --fasta "${fasta_dir}/cRAP/camprotR_240512_cRAP_20190401_full_tags.fasta" --cont-quant-exclude cRAP- \
@@ -39,7 +39,7 @@ var_mod=""
     --verbose 4
 
 # then run the initial analysis to identify modified peptides
-/diann-2.2.0/diann-linux \
+/diann-2.5.1/diann-linux \
     --gen-spec-lib \
     --dir "${data_dir}" \
     --fasta "${fasta_dir}/human/UP000005640_9606.fasta" \

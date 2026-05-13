@@ -15,4 +15,4 @@ export SINGULARITY_CACHEDIR=$TMPDIR/.singularity
 module load WebProxy
 
 # execute download
-singularity pull diann_docker:v0.1.sif docker://ghcr.io/jbardlab/diann_docker:v0.1
+singularity pull diann_docker:v2.5.1.sif docker://ghcr.io/jbardlab/diann_docker:v2.5.1

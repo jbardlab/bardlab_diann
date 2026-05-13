@@ -17,9 +17,9 @@ RUN wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod
     dpkg -i packages-microsoft-prod.deb && \
     rm packages-microsoft-prod.deb
 
-RUN apt-get update && apt-get install -y dotnet-sdk-8.0 && rm -r /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y dotnet-runtime-8.0 && rm -r /var/lib/apt/lists/*
 
-ARG DIANNV=2.2.0
+ARG DIANNV=2.5.1
 COPY diann-$DIANNV /diann-$DIANNV
 
 RUN echo ls
