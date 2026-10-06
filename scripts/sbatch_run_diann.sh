@@ -9,10 +9,10 @@
 #SBATCH --output=/scratch/group/jbardlab/jbard/logs/diann/%x.%j.stdout
 #SBATCH --error=/scratch/group/jbardlab/jbard/logs/diann/%x.%j.stderr
 
-image_path="/scratch/group/jbardlab/containers/diann_docker:v2.5.1.sif"
-analysis_dir="/scratch/group/jbardlab/jbard/mass_spec/20251016_tune_phos"
-analyze_script="${analysis_dir}/tune_data.sh"
-data_dir="/scratch/group/jbardlab/jbard/mass_spec/20251016_tune_phos/data"
+image_path="/scratch/group/jbardlab/containers/diann_docker:v2.7.0.sif"
+analysis_dir="/scratch/group/jbardlab/jbard/mass_spec/diann270test"
+analysis_script="run_diann_template.sh"
+data_dir="/scratch/group/jbardlab/jbard/mass_spec/data/20250819"
 
 nthreads=${SLURM_CPUS_PER_TASK}
 
@@ -21,4 +21,4 @@ singularity exec \
     -B "${analysis_dir}:/analysis" \
     --env nthreads=${nthreads} \
     "${image_path}"  \
-    /bin/bash -c "bash ${analyze_script}"
+   /bin/bash /analysis/"${analysis_script}"
