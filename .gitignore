@@ -211,6 +211,6 @@ __marimo__/
 
 # Local DIA-NN binaries downloaded outside git
 diann-2.2.0/
-DIA-NN-2.2.0-Academia-Linux/
+DIA-NN-*-Academia-Linux/
 diann-2.5.1/
 .DS_Store
